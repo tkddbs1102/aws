@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>후르츠 박스 - AWS 배포 테스트</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #2c3e50;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      user-select: none;
+    }
+    .game-container {
+      background-color: #e8f5e9;
+      background-image: 
+        linear-gradient(45deg, #c8e6c9 25%, transparent 25%, transparent 75%, #c8e6c9 75%, #c8e6c9), 
+        linear-gradient(45deg, #c8e6c9 25%, transparent 25%, transparent 75%, #c8e6c9 75%, #c8e6c9);
+      background-size: 40px 40px;
+      background-position: 0 0, 20px 20px;
+      border: 15px solid #2ecc71;
+      border-radius: 20px;
+      padding: 20px;
+      width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .header { text-align: center; margin-bottom: 20px; }
+    .title { color: #ff5e5e; font-size: 28px; font-weight: bold; margin: 0; text-shadow: 1px 1px 2px white; }
+    .score-board { display: flex; justify-content: space-between; background-color: rgba(255,255,255,0.8); padding: 10px; border-radius: 10px; margin-top: 10px; font-weight: bold; }
+    #board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+    
+    .apple {
+      width: 60px; height: 60px;
+      background: radial-gradient(circle at 30% 30%, #ff7675, #d63031);
+      border-radius: 50%; display: flex; justify-content: center; align-items: center;
+      font-size: 24px; font-weight: bold; color: white; cursor: pointer;
+      position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: transform 0.1s;
+    }
+    .apple:active { transform: scale(0.95); }
+    .apple::before { content: ''; position: absolute; top: -5px; width: 4px; height: 12px; background-color: #8e44ad; border-radius: 2px; transform: rotate(15deg); }
+    .apple::after { content: ''; position: absolute; top: -4px; right: 20px; width: 15px; height: 8px; background-color: #2ecc71; border-radius: 10px 0; }
+    
+    .apple.selected { box-shadow: 0 0 0 4px #ffeaa7, 0 4px 6px rgba(0,0,0,0.2); transform: scale(1.1); }
+    .apple.cleared { visibility: hidden; }
+    
+    .controls { display: flex; justify-content: space-between; align-items: center; background-color: #2ecc71; padding: 10px; border-radius: 5px; color: white; }
+    button { background: transparent; border: 1px solid white; color: white; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+    button:hover { background-color: rgba(255, 255, 255, 0.2); }
+  </style>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="header">
+    <h1 class="title">후르츠 박스</h1>
+    <div class="score-board">
+      <span>Score: <span id="score">0</span></span>
+      <span>현재 합: <strong id="current-sum">0</strong> / 10</span>
+    </div>
+  </div>
+
+  <div id="board"></div>
+
+  <div class="controls">
+    <button onclick="initGame()">Reset</button>
+    <div style="font-size: 12px;">
+      <label><input type="checkbox" checked> BGM</label>
+    </div>
+  </div>
+</div>
+
+<script>
+  let score = 0;
+  let selectedApples = [];
+  const board = document.getElementById('board');
+  const scoreDisplay = document.getElementById('score');
+  const sumDisplay = document.getElementById('current-sum');
+
+  function initGame() {
+    board.innerHTML = '';
+    score = 0;
+    selectedApples = [];
+    updateDisplay();
+
+    // 25개의 사과 생성 (5x5)
+    for (let i = 0; i < 25; i++) {
+      const apple = document.createElement('div');
+      apple.className = 'apple';
+      const num = Math.floor(Math.random() * 9) + 1; // 1~9 랜덤
+      apple.textContent = num;
+      apple.dataset.value = num;
+      
+      apple.onclick = () => handleAppleClick(apple);
+      board.appendChild(apple);
+    }
+  }
+
+  function handleAppleClick(apple) {
+    if (apple.classList.contains('cleared')) return;
+
+    // 선택 해제
+    if (apple.classList.contains('selected')) {
+      apple.classList.remove('selected');
+      selectedApples = selectedApples.filter(a => a !== apple);
+    } 
+    // 선택 추가
+    else {
+      apple.classList.add('selected');
+      selectedApples.push(apple);
+    }
+
+    checkSum();
+  }
+
+  function checkSum() {
+    let currentSum = selectedApples.reduce((sum, apple) => sum + parseInt(apple.dataset.value), 0);
+    sumDisplay.textContent = currentSum;
+    sumDisplay.style.color = currentSum > 10 ? 'red' : 'black';
+
+    // 합이 10이 된 경우
+    if (currentSum === 10) {
+      score += selectedApples.length * 10;
+      setTimeout(() => {
+        selectedApples.forEach(apple => {
+          apple.classList.remove('selected');
+          apple.classList.add('cleared');
+        });
+        resetSelection();
+      }, 200);
+    } 
+    // 10을 초과한 경우 (실패)
+    else if (currentSum > 10) {
+      setTimeout(() => {
+        selectedApples.forEach(apple => apple.classList.remove('selected'));
+        resetSelection();
+      }, 200);
+    }
+  }
+
+  function resetSelection() {
+    selectedApples = [];
+    sumDisplay.textContent = 0;
+    sumDisplay.style.color = 'black';
+    scoreDisplay.textContent = score;
+  }
+
+  // 게임 초기 실행
+  initGame();
+</script>
+
+</body>
+</html>
