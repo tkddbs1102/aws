@@ -3,62 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>후르츠 박스 - AWS 배포 테스트</title>
+  <title>후르츠 박스 - AWS 배포 실습</title>
   <style>
     body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #2c3e50; margin: 0; font-family: 'Arial', sans-serif; user-select: none; }
-    
     .game-container { position: relative; background-color: #ffffff; border: 15px solid #2ecc71; border-radius: 20px; padding: 20px; width: 750px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
     .header { text-align: center; margin-bottom: 20px; }
     .title { color: #ff5e5e; font-size: 28px; font-weight: bold; margin: 0; text-shadow: 1px 1px 2px white; }
     .score-board { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 10px; border-radius: 10px; margin-top: 10px; font-weight: bold; border: 1px solid #dee2e6; font-size: 16px; }
     #timer-display { color: #e74c3c; font-size: 20px; }
-    
-    #board-container { position: relative; touch-action: none; min-height: 400px; /* 빈 보드일 때 높이 유지 */ }
-    
+    #board-container { position: relative; touch-action: none; min-height: 400px; }
     #board { display: grid; grid-template-columns: repeat(17, 1fr); gap: 4px; margin-bottom: 20px; justify-items: center; background-color: #f8f9fa; padding: 15px; border-radius: 10px; }
     #selection-box { position: absolute; border: 2px solid rgba(46, 204, 113, 0.8); background-color: rgba(46, 204, 113, 0.3); pointer-events: none; display: none; z-index: 10; }
-    
-    .apple { width: 32px; height: 32px; background: radial-gradient(circle at 30% 30%, #ff7675, #d63031); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: bold; color: white; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s; }
-    .apple::before { content: ''; position: absolute; top: -3px; width: 3px; height: 6px; background-color: #8e44ad; border-radius: 2px; transform: rotate(15deg); }
-    .apple::after { content: ''; position: absolute; top: -2px; right: 5px; width: 8px; height: 5px; background-color: #2ecc71; border-radius: 10px 0; }
-    .apple.selected { box-shadow: 0 0 0 3px #ffeaa7, 0 4px 6px rgba(0,0,0,0.2); transform: scale(1.1); z-index: 5; }
+    .apple { width: 32px; height: 32px; background: radial-gradient(circle at 30% 30%, #ff7675, #d63031); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: bold; color: white; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .apple.selected { box-shadow: 0 0 0 3px #ffeaa7; transform: scale(1.1); z-index: 5; }
     .apple.cleared { visibility: hidden; }
-    
     .controls { display: flex; justify-content: space-between; align-items: center; background-color: #2ecc71; padding: 10px; border-radius: 5px; color: white; }
-    button { background: transparent; border: 1px solid white; color: white; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-    button:hover { background-color: rgba(255, 255, 255, 0.3); }
-    
-    /* --- 시작 화면 오버레이 --- */
-    #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 200; }
-    #start-screen h2 { color: #2ecc71; font-size: 45px; margin-bottom: 20px; }
-    #start-screen p { font-size: 18px; color: #555; margin-bottom: 30px; text-align: center; line-height: 1.5; }
-    #start-screen button { background-color: #e74c3c; font-size: 24px; padding: 15px 40px; border-radius: 30px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-    #start-screen button:hover { background-color: #c0392b; transform: scale(1.05); }
+    button { background: #e74c3c; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    button:hover { transform: scale(1.05); background-color: #c0392b; }
 
-    /* --- 게임 오버 화면 오버레이 --- */
-    #game-over-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
-    #game-over-screen h2 { color: #e74c3c; font-size: 40px; margin-bottom: 10px; }
-    #game-over-screen p { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 30px; }
-    #game-over-screen button { background-color: #2ecc71; font-size: 18px; padding: 10px 30px; border-radius: 30px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-    #game-over-screen button:hover { background-color: #27ae60; transform: scale(1.05); }
+    /* --- 오버레이 화면 공통 스타일 --- */
+    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
+    
+    /* 시작 화면 전용 */
+    #start-screen input { padding: 12px; font-size: 18px; border-radius: 10px; border: 2px solid #2ecc71; margin-bottom: 20px; text-align: center; width: 250px; }
+
+    /* 게임 오버 화면 전용 */
+    #game-over-screen .btn-group { display: flex; gap: 10px; }
+    .btn-secondary { background-color: #3498db; }
+
+    /* 랭킹 화면 전용 */
+    #ranking-screen { display: none; overflow-y: auto; }
+    #ranking-list { width: 80%; margin: 20px 0; border-collapse: collapse; }
+    #ranking-list th, #ranking-list td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
+    #ranking-list th { background-color: #2ecc71; color: white; }
   </style>
 </head>
 <body>
 
 <div class="game-container">
-  
-  <div id="start-screen">
-    <h2>후르츠 박스</h2>
-    <p>드래그해서 사과의 합을 <strong>10</strong>으로 맞추세요!<br>제한 시간은 2분입니다.</p>
+  <div id="start-screen" class="overlay">
+    <h2 style="color: #2ecc71; font-size: 45px; margin-bottom: 10px;">후르츠 박스</h2>
+    <p style="text-align: center; color: #555;">사과의 합을 10으로 맞추세요!</p>
+    <input type="text" id="user-name-input" placeholder="이름을 입력하세요">
     <button onclick="startGame()">게임 시작</button>
   </div>
 
   <div class="header">
     <h1 class="title">후르츠 박스</h1>
     <div class="score-board">
-      <span>Score: <span id="score">0</span> / 170</span>
+      <span>Score: <span id="score">0</span></span>
       <span id="timer-display">02:00</span>
-      <span>현재 합: <strong id="current-sum">0</strong> / 10</span>
+      <span>현재 합: <strong id="current-sum">0</strong></span>
     </div>
   </div>
   
@@ -67,20 +62,38 @@
     <div id="board"></div>
   </div>
   
-  <div class="controls">
-    <button onclick="initGame()">Reset</button>
-    <div style="font-size: 12px;"><label><input type="checkbox" checked> BGM</label></div>
-  </div>
-  
-  <div id="game-over-screen">
-    <h2>Time Over!</h2>
+  <div id="game-over-screen" class="overlay" style="display: none;">
+    <h2 style="color: #e74c3c; font-size: 40px;">Time Over!</h2>
     <p>최종 점수: <span id="final-score">0</span>점</p>
-    <button onclick="initGame()">다시 하기</button>
+    <div class="btn-group">
+      <button onclick="goToHome()">처음으로</button>
+      <button class="btn-secondary" onclick="showRankings()">랭킹 보기</button>
+    </div>
+  </div>
+
+  <div id="ranking-screen" class="overlay">
+    <h2 style="color: #3498db;">🏆 실시간 랭킹</h2>
+    <table id="ranking-list">
+      <thead>
+        <tr>
+          <th>순위</th>
+          <th>이름</th>
+          <th>점수</th>
+        </tr>
+      </thead>
+      <tbody id="ranking-data">
+        </tbody>
+    </table>
+    <button onclick="goToHome()">닫기</button>
   </div>
 </div>
 
 <script>
+  // --- 설정 변수 (EC2 주소가 나오면 수정하세요) ---
+  const API_URL = 'http://YOUR_EC2_PUBLIC_IP:3000'; 
+
   let score = 0;
+  let userName = "";
   let selectedApples = [];
   let isDragging = false;
   let startX, startY;
@@ -92,56 +105,62 @@
   const selectionBox = document.getElementById('selection-box');
   const sumDisplay = document.getElementById('current-sum');
   const timerDisplay = document.getElementById('timer-display');
-  const gameOverScreen = document.getElementById('game-over-screen');
   const startScreen = document.getElementById('start-screen');
+  const gameOverScreen = document.getElementById('game-over-screen');
+  const rankingScreen = document.getElementById('ranking-screen');
 
-  // 시작 버튼을 누르면 호출되는 함수
   function startGame() {
-    startScreen.style.display = 'none'; // 시작 화면 숨기기
-    initGame(); // 게임 초기화 및 시작
+    const nameInput = document.getElementById('user-name-input');
+    if (!nameInput.value.trim()) {
+      alert("이름을 입력해주세요!");
+      return;
+    }
+    userName = nameInput.value;
+    startScreen.style.display = 'none';
+    initGame();
   }
 
-  function initGame() {
-    const board = document.getElementById('board');
-    board.innerHTML = '';
-    score = 0;
-    selectedApples = [];
-    isGameOver = false;
-    document.getElementById('score').textContent = score;
-    updateSumDisplay(0);
-    gameOverScreen.style.display = 'none';
+ // 1.html의 initGame 함수 내부 수정 제안
+function initGame() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  score = 0;
+  isGameOver = false;
+  document.getElementById('score').textContent = score;
+  updateSumDisplay(0);
+  gameOverScreen.style.display = 'none';
+  rankingScreen.style.display = 'none';
 
-    // 타이머 시작
-    clearInterval(timerInterval);
-    timeLeft = 120;
-    updateTimerDisplay();
-    timerInterval = setInterval(countdown, 1000);
+  clearInterval(timerInterval);
+  timeLeft = 120;
+  updateTimerDisplay();
+  timerInterval = setInterval(countdown, 1000);
 
-    let isValidBoard = false;
-    let appleNumbers = [];
+  // --- 여기부터 수정 ---
+  let isValidBoard = false;
+  let appleNumbers = [];
 
-    // 사과 170개를 뽑고 총합이 10의 배수인지 확인
-    while (!isValidBoard) {
-      appleNumbers = [];
-      let totalSum = 0;
-      for (let i = 0; i < 170; i++) {
-        const num = Math.floor(Math.random() * 9) + 1; 
-        appleNumbers.push(num);
-        totalSum += num;
-      }
-      if (totalSum % 10 === 0) {
-        isValidBoard = true;
-      }
-    }
-
+  while (!isValidBoard) {
+    appleNumbers = [];
+    let totalSum = 0;
     for (let i = 0; i < 170; i++) {
-      const apple = document.createElement('div');
-      apple.className = 'apple';
-      apple.textContent = appleNumbers[i];
-      apple.dataset.value = appleNumbers[i];
-      board.appendChild(apple);
+      const num = Math.floor(Math.random() * 9) + 1; 
+      appleNumbers.push(num);
+      totalSum += num;
     }
+    // 모든 사과의 합이 10의 배수여야 '올 클리어' 가능성이 생김
+    if (totalSum % 10 === 0) isValidBoard = true;
   }
+
+  for (let i = 0; i < 170; i++) {
+    const apple = document.createElement('div');
+    apple.className = 'apple';
+    apple.textContent = appleNumbers[i];
+    apple.dataset.value = appleNumbers[i];
+    board.appendChild(apple);
+  }
+  // --- 여기까지 ---
+}
 
   function countdown() {
     timeLeft--;
@@ -160,14 +179,60 @@
     clearInterval(timerInterval);
     document.getElementById('final-score').textContent = score;
     gameOverScreen.style.display = 'flex'; 
+
+    // 게임 종료 시 자동으로 RDS에 저장 시도
+    saveScore(userName, score);
   }
 
+  function goToHome() {
+    gameOverScreen.style.display = 'none';
+    rankingScreen.style.display = 'none';
+    startScreen.style.display = 'flex';
+    document.getElementById('user-name-input').value = "";
+  }
+
+  // --- 백엔드 통신 함수들 ---
+
+  function saveScore(name, score) {
+    fetch(`${API_URL}/save-score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: name, score: score })
+    })
+    .then(res => res.text())
+    .then(data => console.log('저장 성공:', data))
+    .catch(err => console.error('저장 실패:', err));
+  }
+
+  function showRankings() {
+    rankingScreen.style.display = 'flex';
+    const tbody = document.getElementById('ranking-data');
+    tbody.innerHTML = "<tr><td colspan='3'>로딩 중...</td></tr>";
+
+    fetch(`${API_URL}/rankings`)
+    .then(res => res.json())
+    .then(data => {
+      tbody.innerHTML = "";
+      data.forEach((row, index) => {
+        const tr = `<tr>
+          <td>${index + 1}</td>
+          <td>${row.username}</td>
+          <td>${row.score}</td>
+        </tr>`;
+        tbody.innerHTML += tr;
+      });
+    })
+    .catch(err => {
+      tbody.innerHTML = "<tr><td colspan='3'>데이터를 불러올 수 없습니다.</td></tr>";
+    });
+  }
+
+  // --- 기존 드래그 앤 드롭 로직 유지 ---
   function updateSumDisplay(sum) {
     sumDisplay.textContent = sum;
     sumDisplay.style.color = sum > 10 ? 'red' : (sum === 10 ? '#2ecc71' : 'black');
   }
 
-  // --- 드래그 앤 드롭 로직 ---
   boardContainer.addEventListener('pointerdown', (e) => {
     if (isGameOver) return; 
     isDragging = true;
@@ -189,8 +254,6 @@
     const rect = boardContainer.getBoundingClientRect();
     let currentX = e.clientX - rect.left;
     let currentY = e.clientY - rect.top;
-    currentX = Math.max(0, Math.min(currentX, rect.width));
-    currentY = Math.max(0, Math.min(currentY, rect.height));
     const left = Math.min(startX, currentX);
     const top = Math.min(startY, currentY);
     const width = Math.abs(currentX - startX);
@@ -215,10 +278,7 @@
     selectedApples = [];
     document.querySelectorAll('.apple:not(.cleared)').forEach(apple => {
       const appleRect = apple.getBoundingClientRect();
-      const isColliding = !(
-        boxRect.right < appleRect.left || boxRect.left > appleRect.right || 
-        boxRect.bottom < appleRect.top || boxRect.top > appleRect.bottom
-      );
+      const isColliding = !(boxRect.right < appleRect.left || boxRect.left > appleRect.right || boxRect.bottom < appleRect.top || boxRect.top > appleRect.bottom);
       if (isColliding) {
         apple.classList.add('selected');
         selectedApples.push(apple);
@@ -235,24 +295,16 @@
     if (currentSum === 10) {
       score += selectedApples.length;
       document.getElementById('score').textContent = score;
-      setTimeout(() => {
-        selectedApples.forEach(apple => {
-          apple.classList.remove('selected');
-          apple.classList.add('cleared');
-        });
-        selectedApples = [];
-        updateSumDisplay(0);
-      }, 150);
+      selectedApples.forEach(apple => {
+        apple.classList.remove('selected');
+        apple.classList.add('cleared');
+      });
     } else {
-      setTimeout(() => {
-        selectedApples.forEach(apple => apple.classList.remove('selected'));
-        selectedApples = [];
-        updateSumDisplay(0);
-      }, 150);
+      selectedApples.forEach(apple => apple.classList.remove('selected'));
     }
+    selectedApples = [];
+    updateSumDisplay(0);
   }
-
-  // 페이지 로드 시 자동 실행 구문(window.onload = initGame;)을 삭제했습니다.
 </script>
 
 </body>
