@@ -11,7 +11,7 @@ const db = mysql.createConnection({
   host: 'database-1.cpkbvgqdtfpl.us-east-1.rds.amazonaws.com',      // 예: mydb.c1234.ap-northeast-2.rds.amazonaws.com
   user: 'admin',                  // RDS 설정 시 만든 마스터 사용자 이름
   password: '00000000',       // RDS 비밀번호
-  database: 'database-1'             // RDS에 생성한 데이터베이스 이름
+  database: 'apple_game'             // RDS에 생성한 데이터베이스 이름
 });
 
 // RDS 연결 확인
