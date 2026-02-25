@@ -20,7 +20,6 @@
     }
     .header { text-align: center; margin-bottom: 20px; }
     .title { color: #ff5e5e; font-size: 28px; font-weight: bold; margin: 0; text-shadow: 1px 1px 2px white; }
-
     .button-group { display: flex; gap: 15px; margin-top: 10px; justify-content: center; }
 
     button { 
@@ -53,49 +52,47 @@
 <body>
 
 <div class="game-container">
-  <div id="start-screen" class="overlay">
-    <h2 style="color: #2ecc71; font-size: 45px; margin-bottom: 10px;">후르츠 박스</h2>
-    <p style="color: #555;">사과의 합을 10으로 맞추세요!</p>
-    <input type="text" id="user-name-input" placeholder="이름을 입력하세요">
-    <div class="button-group">
-      <button onclick="startGame()">게임 시작</button>
-      <button onclick="showRankings()" class="btn-secondary">랭킹 보기</button>
+    <div id="start-screen" class="overlay">
+        <h2 style="color: #2ecc71; font-size: 45px; margin-bottom: 10px;">후르츠 박스</h2>
+        <input type="text" id="user-name-input" placeholder="이름을 입력하세요">
+        <div class="button-group">
+            <button onclick="startGame()">게임 시작</button>
+            <button onclick="showRankings()" class="btn-secondary">랭킹 보기</button>
+        </div>
     </div>
-  </div>
 
-  <div id="ranking-screen" class="overlay">
-    <h2 style="color: #3498db; font-size: 30px;">🏆 실시간 랭킹</h2>
-    <table id="ranking-list">
-      <thead>
-        <tr><th>순위</th><th>이름</th><th>점수</th></tr>
-      </thead>
-      <tbody id="ranking-data"></tbody>
-    </table>
-    <button onclick="goToHome()">닫기</button>
-  </div>
+    <div id="ranking-screen" class="overlay">
+        <h2 style="color: #3498db; font-size: 30px;">🏆 실시간 랭킹</h2>
+        <table id="ranking-list">
+            <thead>
+                <tr><th>순위</th><th>이름</th><th>점수</th></tr>
+            </thead>
+            <tbody id="ranking-data"></tbody>
+        </table>
+        <button onclick="goToHome()">닫기</button>
+    </div>
 
-  <div class="header">
-    <h1 class="title">후르츠 박스</h1>
-    <div class="score-board">
-      <span>Score: <span id="score">0</span></span>
-      <span id="timer-display">02:00</span>
-      <span>현재 합: <strong id="current-sum">0</strong></span>
+    <div id="game-over-screen" class="overlay" style="display: none;">
+        <h2 style="color: #e74c3c; font-size: 40px;">Time Over!</h2>
+        <p>최종 점수: <span id="final-score">0</span>점</p>
+        <div class="button-group">
+            <button onclick="goToHome()">처음으로</button>
+            <button class="btn-secondary" onclick="showRankings()">랭킹 보기</button>
+        </div>
     </div>
-  </div>
-  
-  <div id="board-container">
-    <div id="selection-box"></div>
-    <div id="board"></div>
-  </div>
-  
-  <div id="game-over-screen" class="overlay" style="display: none;">
-    <h2 style="color: #e74c3c; font-size: 40px;">Time Over!</h2>
-    <p>최종 점수: <span id="final-score">0</span>점</p>
-    <div class="button-group">
-      <button onclick="goToHome()">처음으로</button>
-      <button class="btn-secondary" onclick="showRankings()">랭킹 보기</button>
+
+    <div class="header">
+        <h1 class="title">후르츠 박스</h1>
+        <div class="score-board">
+            <span>Score: <span id="score">0</span></span>
+            <span id="timer-display">02:00</span>
+            <span>현재 합: <strong id="current-sum">0</strong></span>
+        </div>
     </div>
-  </div>
+    <div id="board-container">
+        <div id="selection-box"></div>
+        <div id="board"></div>
+    </div>
 </div>
 
 <script>
@@ -121,39 +118,33 @@
   }
 
   function initGame() {
-  const board = document.getElementById('board');
-  board.innerHTML = ''; score = 0; isGameOver = false;
-  document.getElementById('score').textContent = score;
-  updateSumDisplay(0);
-  gameOverScreen.style.display = 'none';
-  rankingScreen.style.display = 'none';
+    const board = document.getElementById('board');
+    board.innerHTML = ''; score = 0; isGameOver = false;
+    document.getElementById('score').textContent = score;
+    updateSumDisplay(0);
+    gameOverScreen.style.display = 'none';
+    rankingScreen.style.display = 'none';
 
-  clearInterval(timerInterval);
-  timeLeft = 120;
-  updateTimerDisplay();
-  timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(timeLeft<=0) endGame(); }, 1000);
+    clearInterval(timerInterval);
+    timeLeft = 120;
+    updateTimerDisplay();
+    timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(timeLeft<=0) endGame(); }, 1000);
 
-  // --- 10의 배수 판 만들기 로직 복구 ---
-  let totalSum = 0;
-  let nums = [];
-  do {
-    nums = [];
-    totalSum = 0;
-    for (let i = 0; i < 170; i++) {
-      const n = Math.floor(Math.random() * 9) + 1;
-      nums.push(n);
-      totalSum += n;
-    }
-  } while (totalSum % 10 !== 0); // 합이 10의 배수가 아니면 다시 짜기
+    let totalSum = 0;
+    let nums = [];
+    do {
+      nums = []; totalSum = 0;
+      for (let i = 0; i < 170; i++) {
+        const n = Math.floor(Math.random() * 9) + 1;
+        nums.push(n); totalSum += n;
+      }
+    } while (totalSum % 10 !== 0);
 
-  nums.forEach(num => {
-    const apple = document.createElement('div');
-    apple.className = 'apple';
-    apple.textContent = num;
-    apple.dataset.value = num;
-    board.appendChild(apple);
-  });
-
+    nums.forEach(num => {
+      const apple = document.createElement('div');
+      apple.className = 'apple'; apple.textContent = num;
+      apple.dataset.value = num; board.appendChild(apple);
+    });
   }
 
   function updateTimerDisplay() {
@@ -173,9 +164,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: name, score: score })
-    })
-    .then(res => console.log('저장 시도 완료'))
-    .catch(err => console.error('저장 실패:', err));
+    }).catch(err => console.error('저장 실패:', err));
   }
 
   function showRankings() {
