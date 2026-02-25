@@ -6,24 +6,33 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. Connection Pool 설정 (연결이 끊겨도 자동으로 다시 연결해줍니다)
+// 1. Connection Pool 설정 (가장 안정적인 방식)
 const pool = mysql.createPool({
   host: 'database-1.cpkbvgqdtfpl.us-east-1.rds.amazonaws.com',
   user: 'admin',
   password: '00000000',
-  database: 'apple_game',
+  database: 'apple_game', // 실제 DB 이름 확인
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  keepAliveInitialDelay: 10000, // 연결 유지를 위한 설정
+  enableKeepAlive: true
 });
 
-// 프로미스(Promise)를 사용하여 더 깔끔하게 쿼리를 날릴 수 있게 설정
 const db = pool.promise();
 
-// 연결 확인 로그
-console.log('✅ 데이터베이스 커넥션 풀이 생성되었습니다.');
+// [추가] 서버 시작 시 RDS 연결 상태를 즉시 점검합니다.
+async function checkConnection() {
+  try {
+    const [rows] = await db.query('SELECT 1');
+    console.log('✅ RDS 데이터베이스 연결 상태 양호!');
+  } catch (err) {
+    console.error('❌ RDS 연결 점검 실패:', err.message);
+  }
+}
+checkConnection();
 
-// 2. 서버 상태 확인용 (로드 밸런서 접속 시 확인 가능)
+// 2. 서버 상태 확인용 루트 경로
 app.get('/', (req, res) => {
   res.send('🍎 사과 게임 백엔드 서버가 정상 작동 중입니다!');
 });
@@ -45,6 +54,7 @@ app.post('/save-score', async (req, res) => {
 
 // 4. 랭킹 불러오기 API (GET /rankings)
 app.get('/rankings', async (req, res) => {
+  // 최고 점수 상위 10명을 가져옵니다.
   const sql = 'SELECT username, score FROM rankings ORDER BY score DESC LIMIT 10';
   
   try {
