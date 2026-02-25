@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>후르츠 박스 - AWS 배포 실습</title>
   <style>
-    body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #2c3e50; margin: 0; font-family: 'Arial', sans-serif; user-select: none; }
+    body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #2c3e50; margin: 0; font-family: 'Arial', sans-serif; user-select: none; -webkit-user-select: none;  /* 크롬, 사파리 */
+    -moz-user-select: none;      /* 파이어폭스 */
+    -ms-user-select: none;      /* 인터넷 익스플로러 */
+    user-select: none;          /* 표준 */
+    -webkit-tap-highlight-color: transparent; }
     .game-container { position: relative; background-color: #ffffff; border: 15px solid #2ecc71; border-radius: 20px; padding: 20px; width: 750px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
     .header { text-align: center; margin-bottom: 20px; }
     .title { color: #ff5e5e; font-size: 28px; font-weight: bold; margin: 0; text-shadow: 1px 1px 2px white; }
