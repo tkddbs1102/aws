@@ -121,26 +121,39 @@
   }
 
   function initGame() {
-    const board = document.getElementById('board');
-    board.innerHTML = ''; score = 0; isGameOver = false;
-    document.getElementById('score').textContent = score;
-    updateSumDisplay(0);
-    gameOverScreen.style.display = 'none';
-    rankingScreen.style.display = 'none';
+  const board = document.getElementById('board');
+  board.innerHTML = ''; score = 0; isGameOver = false;
+  document.getElementById('score').textContent = score;
+  updateSumDisplay(0);
+  gameOverScreen.style.display = 'none';
+  rankingScreen.style.display = 'none';
 
-    clearInterval(timerInterval);
-    timeLeft = 120;
-    updateTimerDisplay();
-    timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(timeLeft<=0) endGame(); }, 1000);
+  clearInterval(timerInterval);
+  timeLeft = 120;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(timeLeft<=0) endGame(); }, 1000);
 
+  // --- 10의 배수 판 만들기 로직 복구 ---
+  let totalSum = 0;
+  let nums = [];
+  do {
+    nums = [];
+    totalSum = 0;
     for (let i = 0; i < 170; i++) {
-      const num = Math.floor(Math.random() * 9) + 1;
-      const apple = document.createElement('div');
-      apple.className = 'apple';
-      apple.textContent = num;
-      apple.dataset.value = num;
-      board.appendChild(apple);
+      const n = Math.floor(Math.random() * 9) + 1;
+      nums.push(n);
+      totalSum += n;
     }
+  } while (totalSum % 10 !== 0); // 합이 10의 배수가 아니면 다시 짜기
+
+  nums.forEach(num => {
+    const apple = document.createElement('div');
+    apple.className = 'apple';
+    apple.textContent = num;
+    apple.dataset.value = num;
+    board.appendChild(apple);
+  });
+
   }
 
   function updateTimerDisplay() {
