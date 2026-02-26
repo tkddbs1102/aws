@@ -1,4 +1,4 @@
- # 후르츠 박스 (Apple Game) - AWS 실습 배포X
+ # 후르츠 박스 (Apple Game) - AWS 실습 (배포X)
 
 1. **E2c생성**: AWS EC2 인스턴스를 생성하고 Node.js 환경을 설정하여 백엔드 서버를 가동했습니다.
 2. **백엔드 개발**: JavaScript(Express)를 사용하여 점수 저장 및 랭킹 조회를 위한 시스템를 구현했습니다.
